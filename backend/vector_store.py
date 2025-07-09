@@ -45,7 +45,7 @@ class PDFVectorStore:
             return []
         words = full_text.split()
         chunks = []
-        # Sliding window chunking with overlap
+
         i = 0
         while i < len(words):
             chunk_words = words[i:i+self.chunk_size]
@@ -61,7 +61,7 @@ class PDFVectorStore:
         return chunks
 
     def _load_or_build(self):
-        # Try to load cached chunks and FAISS index
+
         if os.path.exists(self.chunks_path) and os.path.exists(self.index_path) and os.path.exists(self.embeddings_path):
             with open(self.chunks_path, 'rb') as f:
                 self.text_chunks = pickle.load(f)
@@ -71,11 +71,10 @@ class PDFVectorStore:
             self.index.add(np.array(self.embeddings, dtype=np.float32))
             return
 
-        # Otherwise, process files and build index
         files = [os.path.join(self.directory, f) for f in os.listdir(self.directory)
                  if f.endswith('.pdf') or f.endswith('.docx')]
         chunks = []
-        # Parallel file extraction
+
         with ThreadPoolExecutor(max_workers=4) as executor:
             future_to_file = {executor.submit(self._extract_text_chunks, f): f for f in files}
             for future in as_completed(future_to_file):
@@ -83,11 +82,11 @@ class PDFVectorStore:
                 if result:
                     chunks.extend(result)
         self.text_chunks = chunks
-        # Save chunks to disk
+
         with open(self.chunks_path, 'wb') as f:
             pickle.dump(self.text_chunks, f)
 
-        # Batch embedding generation
+
         texts = [chunk["text"] for chunk in self.text_chunks]
         all_embeddings = []
         for i in range(0, len(texts), self.batch_size):
@@ -102,7 +101,7 @@ class PDFVectorStore:
         faiss.write_index(self.index, self.index_path)
 
     def search(self, query: str, top_k: int = 5) -> list:
-        # Use sentence-transformers for query embedding
+
         query_vec = self.model.encode([query])
         D, I = self.index.search(np.array(query_vec, dtype=np.float32), top_k)
         results = [self.text_chunks[i] for i in I[0]]

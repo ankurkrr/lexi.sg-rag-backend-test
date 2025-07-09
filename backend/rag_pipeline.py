@@ -1,4 +1,3 @@
-
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -8,8 +7,6 @@ client = OpenAI(
     base_url="https://router.huggingface.co/novita/v3/openai",
     api_key=os.environ["HF_TOKEN"],
 )
-
-
 
 
 class RAGPipeline:
