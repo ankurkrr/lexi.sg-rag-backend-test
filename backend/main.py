@@ -9,7 +9,7 @@ class QueryRequest(BaseModel):
     query: str
 
 # Initialize FAISS vector store for PDFs
-doc_vector_store = PDFVectorStore(r"C:\Users\iaman\Vscode Pycharm\RAG Lexi - Test\pdfs")
+doc_vector_store = PDFVectorStore(r"your pdf location",)
 
 # Initialize RAG pipeline
 rag_pipeline = RAGPipeline(doc_vector_store)
