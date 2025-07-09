@@ -17,7 +17,7 @@ A Retrieval-Augmented Generation (RAG) system for answering questions using your
 3. **Download or place your PDF/DOCX files**
 
    - Place your files in the directory you want to use for document search (e.g., `pdfs/` or a custom folder).
-   - Update the path in `backend/main.py` and `backend/vector_store.py` if you use a different folder.
+   - Update the path in `backend/main.py`,`doc_vector_store = PDFVectorStore("your pdf location")`.
 
 4. **Obtain a HuggingFace Inference Token**
 
