@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RAG Chatbot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #181c24;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: 48px auto;
+            background: rgba(40, 44, 52, 0.85); /* transparent grey */
+            border-radius: 18px;
+            box-shadow: 0 6px 32px 0 #0004, 0 1.5px 6px 0 #0002;
+            padding: 32px 28px 24px 28px;
+            border: 1.5px solid #444a57;
+        }
+        .chat-container h2 {
+            text-align: center;
+            color: #e3e8f0;
+            margin-bottom: 8px;
+            margin-top: 0;
+            font-size: 1.35em;
+            letter-spacing: 0.5px;
+        }
+        .chat-log {
+            height: 350px;
+            overflow-y: auto;
+            border: 1.5px solid #444a57;
+            border-radius: 10px;
+            padding: 16px;
+            background: #23262e;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 4px #2224;
+        }
+        .chat-msg {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .user {
+            color: #7ecbff;
+            font-weight: bold;
+        }
+        .bot {
+            color: #e3e8f0;
+        }
+        .citation {
+            font-size: 0.97em;
+            color: #b3d8fd;
+            margin-left: 22px;
+            background: rgba(126,203,255,0.08);
+            border-left: 3px solid #7ecbff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1.5px solid #444a57;
+            background: #23262e;
+            font-size: 1.08em;
+            color: #e3e8f0;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .input-row input:focus {
+            border: 1.5px solid #7ecbff;
+        }
+        .input-row button {
+            padding: 10px 22px;
+            border-radius: 6px;
+            border: none;
+            background: linear-gradient(90deg, #7ecbff 0%, #4fa3e3 100%);
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.08em;
+            cursor: pointer;
+            box-shadow: 0 1px 4px #7ecbff44;
+            transition: background 0.2s;
+        }
+        .input-row button:disabled {
+            background: #444a57;
+            color: #eee;
+            cursor: not-allowed;
+        }
+        @media (max-width: 700px) {
+            .chat-container {
+                max-width: 98vw;
+                padding: 12px 2vw 12px 2vw;
+            }
+            .chat-log {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <h2>RAG Chatbot</h2>
+    <div class="chat-log" id="chat-log"></div>
+    <form id="chat-form" autocomplete="off">
+        <div class="input-row">
+            <input type="text" id="user-input" placeholder="Ask a question..." required autofocus />
+            <button type="submit">Send</button>
+        </div>
+    </form>
+</div>
+<script>
+const chatLog = document.getElementById('chat-log');
+const chatForm = document.getElementById('chat-form');
+const userInput = document.getElementById('user-input');
+
+function appendMessage(sender, text, citations=[]) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-msg';
+    msgDiv.innerHTML = `<span class="${sender}">${sender === 'user' ? 'You' : 'Bot'}:</span> <span class="bot">${text.replace(/\n/g, '<br>')}</span>`;
+    if (citations && citations.length > 0) {
+        citations.forEach(cite => {
+            const citeDiv = document.createElement('div');
+            citeDiv.className = 'citation';
+            citeDiv.innerHTML = `Citation: <b>${cite.source}</b> (${cite.location})<br>"${cite.text}"`;
+            msgDiv.appendChild(citeDiv);
+        });
+    }
+    chatLog.appendChild(msgDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+chatForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const query = userInput.value.trim();
+    if (!query) return;
+    appendMessage('user', query);
+    userInput.value = '';
+    appendMessage('bot', '<i>Thinking...</i>');
+    try {
+        const res = await fetch('/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'query=' + encodeURIComponent(query)
+        });
+        const data = await res.json();
+        // Remove the 'Thinking...' message
+        chatLog.removeChild(chatLog.lastChild);
+        if (data.answer) {
+            appendMessage('bot', data.answer, data.citations);
+        } else if (data.error) {
+            appendMessage('bot', `<span style='color:red'>${data.error}</span>`);
+        } else {
+            appendMessage('bot', '<span style="color:red">No response from backend.</span>');
+        }
+    } catch (err) {
+        chatLog.removeChild(chatLog.lastChild);
+        appendMessage('bot', `<span style='color:red'>${err}</span>`);
+    }
+};
+</script>
+</body>
+</html>

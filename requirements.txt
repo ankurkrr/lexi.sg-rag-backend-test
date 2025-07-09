@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+PyPDF2
+python-docx
+sentence-transformers
+transformers
+torch
+einops
+faiss-cpu
+python-dotenv
+huggingface_hub[hf_xet]
+flask
+requests
+openai
